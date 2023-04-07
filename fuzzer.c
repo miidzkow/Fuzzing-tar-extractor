@@ -85,12 +85,12 @@ void write_tar_file(const char* filename, struct tar_t* header) {
     fclose(file);
 }
 
-int extract(char* extractor) {
+int extract(char* extractor, char * filename) {
     int rv = 0;
     char cmd[51];
     strncpy(cmd, extractor, 25);
     cmd[26] = '\0';
-    strncat(cmd, " test_filename.tar", 25);
+    strncat(cmd, filename, 25);
     char buf[33];
     FILE *fp;
 
@@ -171,7 +171,7 @@ int filename_field(char* extractor) {
             write_tar_file("test_filename.tar", &header);
 
 
-            if (extract(extractor) == 1 ) {
+            if (extract(extractor, " test_filename.tar") == 1 ) {
                 // The extractor has crashed
                 change_archive_name("test_filename.tar", "success_filename.tar");
                 // Delete the extracted file
