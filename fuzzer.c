@@ -104,10 +104,10 @@ int extract(char* extractor, char * filename) {
         goto finally;
     }
     if(strncmp(buf, "*** The program has crashed ***\n", 33)) {
-        printf("Not the crash message\n");
+        //printf("Not the crash message\n");
         goto finally;
     } else {
-        printf("Crash message\n");
+        //printf("Crash message\n");
         rv = 1;
         goto finally;
     }
@@ -117,17 +117,6 @@ int extract(char* extractor, char * filename) {
         rv = -1;
     }
     return rv;
-}
-
-
-void change_archive_name(char* oldname, char* newname) {
-
-    if (rename(oldname, newname) != 0) {
-        printf("Error renaming file.\n");
-        exit(EXIT_FAILURE);
-    } else {
-        printf("File renamed successfully.\n");
-    }
 }
 
 
@@ -174,7 +163,7 @@ int test_filename_field(char* extractor) {
 
             if (extract(extractor, " test_filename.tar") == 1 ) {
                 // The extractor has crashed
-                change_archive_name("test_filename.tar", "success_filename.tar");
+                rename("test_filename.tar", "success_filename.tar");
                 // Delete the extracted file
                 remove(filename);
                 // return 1 to stop the execution as one crash is enough
@@ -229,7 +218,7 @@ int test_mode_field(char* extractor) {
 
             if (extract(extractor, " test_mode.tar") == 1 ) {
                 // The extractor has crashed
-                change_archive_name("test_mode.tar", "success_mode.tar");
+                rename("test_mode.tar", "success_mode.tar");
                 // Delete the extracted file
                 remove("file.txt");
                 // return 1 to stop the execution as one crash is enough
@@ -242,7 +231,6 @@ int test_mode_field(char* extractor) {
         }
         mode[i] = '0';
     }
-
 
     remove("test_mode.tar");
     return 0;
@@ -286,7 +274,7 @@ int test_uid_field(char* extractor) {
 
             if (extract(extractor, " test_uid.tar") == 1 ) {
                 // The extractor has crashed
-                change_archive_name("test_uid.tar", "success_uid.tar");
+                rename("test_uid.tar", "success_uid.tar");
                 // Delete the extracted file
                 remove("file.txt");
                 // return 1 to stop the execution as one crash is enough
@@ -299,7 +287,6 @@ int test_uid_field(char* extractor) {
         }
         uid[i] = '0';
     }
-
 
     remove("test_uid.tar");
     return 0;
@@ -343,7 +330,7 @@ int test_gid_field(char* extractor) {
 
             if (extract(extractor, " test_gid.tar") == 1 ) {
                 // The extractor has crashed
-                change_archive_name("test_gid.tar", "success_gid.tar");
+                rename("test_gid.tar", "success_gid.tar");
                 // Delete the extracted file
                 remove("file.txt");
                 // return 1 to stop the execution as one crash is enough
@@ -357,42 +344,101 @@ int test_gid_field(char* extractor) {
         gid[i] = '0';
     }
 
-
     remove("test_gid.tar");
     return 0;
 }
 
+/**
+ * Tests tar with size field with non-ascii characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_size_field(char* extractor) {
+    printf("Testing the field 'size' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char size[11];
+    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    memset(size, '0', sizeof(size));
+
+    struct tar_t header;
+
+    // Loop through each position in the mode and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 11; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            size[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the mode field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", size,
+                                "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_size.tar", &header);
+
+
+            if (extract(extractor, " test_size.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_size.tar", "success_size.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        size[i] = '0';
+    }
+
+    remove("test_size.tar");
+    return 0;
+}
+
+
 int main(__attribute__((unused)) int argc, char* argv[]) {
-
-
 
     // 1. Test the file name field
     if (test_filename_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\n");
     } else {
-        printf("~~~~~No issues found with the file name field.~~~~~\n");
+        printf("~~~~~No issues found with the file name field.~~~~~\n\n");
     }
 
     // 2. Test the mode field
     if (test_mode_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some characters in the mode field caused a crash.~~~~~\n");
     } else {
-        printf("~~~~~No issues found with the mode field.~~~~~\n");
+        printf("~~~~~No issues found with the mode field.~~~~~\n\n");
     }
 
     // 3. Test the uid field
     if (test_uid_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some characters in the uid field caused a crash.~~~~~\n");
     } else {
-        printf("~~~~~No issues found with the uid field.~~~~~\n");
+        printf("~~~~~No issues found with the uid field.~~~~~\n\n");
     }
-
 
     // 4. Test the gid field
     if (test_gid_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some characters in the gid field caused a crash.~~~~~\n");
     } else {
-        printf("~~~~~No issues found with the gid field.~~~~~\n");
+        printf("~~~~~No issues found with the gid field.~~~~~\n\n");
+    }
+
+    // 5. Test the size field
+    if (test_size_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the size field caused a crash.~~~~~\n");
+    } else {
+        printf("~~~~~No issues found with the size field.~~~~~\n\n");
     }
 
 
