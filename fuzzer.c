@@ -132,13 +132,14 @@ void change_archive_name(char* oldname, char* newname) {
 
 
 /**
- * Tests tar with name field with all possibles characters at each position (one position by one, not all combinations)
+ * Tests tar with name field with all non-ascii characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
  */
-int filename_field(char* extractor) {
+int test_filename_field(char* extractor) {
 
-    printf("Testing the field 'name' with all characters for each possible position (position by position).\n"
+    printf("Testing the field 'name' with non-ascii characters for each possible position (position by position).\n"
            "        > File without data.\n"
            "        > Single file in archive.\n");
 
@@ -183,7 +184,6 @@ int filename_field(char* extractor) {
                 remove(filename);
                 // Keep going, maybe next character or next position will make it crash
             }
-
         }
         filename[i] = 'a';
     }
@@ -192,17 +192,207 @@ int filename_field(char* extractor) {
     return 0;
 }
 
+/**
+ * Tests tar with mode field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_mode_field(char* extractor) {
+    printf("Testing the field 'mode' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
 
+
+    int i, j;
+    char mode[7];
+    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    memset(mode, '0', sizeof(mode));
+
+    struct tar_t header;
+
+    // Loop through each position in the mode and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 7; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            mode[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the mode field
+            generate_tar_header(&header, "file.txt", mode, "0001750", "0001750", "00000000062",
+                                "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_mode.tar", &header);
+
+
+            if (extract(extractor, " test_mode.tar") == 1 ) {
+                // The extractor has crashed
+                change_archive_name("test_mode.tar", "success_mode.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        mode[i] = '0';
+    }
+
+
+    remove("test_mode.tar");
+    return 0;
+}
+
+
+/**
+ * Tests tar with uid field with non-ascii characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_uid_field(char* extractor) {
+    printf("Testing the field 'uid' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char uid[7];
+    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    memset(uid, '0', sizeof(uid));
+
+    struct tar_t header;
+
+    // Loop through each position in the mode and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 7; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            uid[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the mode field
+            generate_tar_header(&header, "file.txt", "0000664", uid, "0001750", "00000000062",
+                                "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_uid.tar", &header);
+
+
+            if (extract(extractor, " test_uid.tar") == 1 ) {
+                // The extractor has crashed
+                change_archive_name("test_uid.tar", "success_uid.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        uid[i] = '0';
+    }
+
+
+    remove("test_uid.tar");
+    return 0;
+}
+
+
+/**
+ * Tests tar with gid field with non-ascii characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_gid_field(char* extractor) {
+    printf("Testing the field 'gid' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char gid[7];
+    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    memset(gid, '0', sizeof(gid));
+
+    struct tar_t header;
+
+    // Loop through each position in the mode and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 7; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            gid[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the mode field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", gid, "00000000062",
+                                "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_gid.tar", &header);
+
+
+            if (extract(extractor, " test_gid.tar") == 1 ) {
+                // The extractor has crashed
+                change_archive_name("test_gid.tar", "success_gid.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        gid[i] = '0';
+    }
+
+
+    remove("test_gid.tar");
+    return 0;
+}
 
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
 
 
     // 1. Test the file name field
-    if (filename_field(argv[1]) == 1) {
-        printf("~~~~~It has crashed ! Some characters in the file name field caused a crash.~~~~~\n");
+    if (test_filename_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\n");
     } else {
         printf("~~~~~No issues found with the file name field.~~~~~\n");
+    }
+
+    // 2. Test the mode field
+    if (test_mode_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the mode field caused a crash.~~~~~\n");
+    } else {
+        printf("~~~~~No issues found with the mode field.~~~~~\n");
+    }
+
+    // 3. Test the uid field
+    if (test_uid_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the uid field caused a crash.~~~~~\n");
+    } else {
+        printf("~~~~~No issues found with the uid field.~~~~~\n");
+    }
+
+
+    // 4. Test the gid field
+    if (test_gid_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the gid field caused a crash.~~~~~\n");
+    } else {
+        printf("~~~~~No issues found with the gid field.~~~~~\n");
     }
 
 
