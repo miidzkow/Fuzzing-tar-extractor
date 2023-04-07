@@ -251,7 +251,7 @@ int test_uid_field(char* extractor) {
 
     int i, j;
     char uid[7];
-    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    // By default, the uid is 7 times "0" as the uid has to be null-terminated
     memset(uid, '0', sizeof(uid));
 
     struct tar_t header;
@@ -307,7 +307,7 @@ int test_gid_field(char* extractor) {
 
     int i, j;
     char gid[7];
-    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    // By default, the gid is 7 times "0" as the gid has to be null-terminated
     memset(gid, '0', sizeof(gid));
 
     struct tar_t header;
@@ -362,7 +362,7 @@ int test_size_field(char* extractor) {
 
     int i, j;
     char size[11];
-    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    // By default, the size is 11 times "0" as the size has to be null-terminated
     memset(size, '0', sizeof(size));
 
     struct tar_t header;
@@ -418,7 +418,7 @@ int test_mtime_field(char* extractor) {
 
     int i, j;
     char mtime[11];
-    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    // By default, the mtime is 11 times "0" as the mtime has to be null-terminated
     memset(mtime, '0', sizeof(mtime));
 
     struct tar_t header;
@@ -474,7 +474,7 @@ int test_typeflag_field(char* extractor) {
 
     int j;
     char typeflag[1];
-    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    // By default, the typeflag is 0
     memset(typeflag, '0', sizeof(typeflag));
 
     struct tar_t header;
@@ -515,8 +515,64 @@ int test_typeflag_field(char* extractor) {
 }
 
 
-int main(__attribute__((unused)) int argc, char* argv[]) {
+/**
+ * Tests tar with linkname field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_linkname_field(char* extractor) {
+    printf("Testing the field 'linkname' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
 
+
+    int i, j;
+    char linkname[99];
+    // By default, the linkname is 99 times "a" as the linkname has to be null-terminated
+    memset(linkname, 'a', sizeof(linkname));
+
+    struct tar_t header;
+
+    // Loop through each position in the mode and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 99; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            linkname[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the mode field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "8", linkname, "ustar", "00", "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_linkname.tar", &header);
+
+
+            if (extract(extractor, " test_linkname.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_linkname.tar", "success_linkname.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        linkname[i] = 'a';
+    }
+
+    remove("test_linkname.tar");
+    return 0;
+}
+
+
+int main(__attribute__((unused)) int argc, char* argv[]) {
+/*
     // 1. Test the file name field
     if (test_filename_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\n\n");
@@ -564,6 +620,14 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
         printf("~~~~~It has crashed ! Some characters in the typeflag field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the typeflag field.~~~~~\n\n");
+    }
+*/
+
+    // 8. Test the linkname field
+    if (test_linkname_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the linkname field caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with the linkname field.~~~~~\n\n");
     }
 
     return 0;
