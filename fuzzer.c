@@ -238,7 +238,7 @@ int test_mode_field(char* extractor) {
 
 
 /**
- * Tests tar with uid field with non-ascii characters at each position (one position by one, not all combinations)
+ * Tests tar with uid field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
  * @return 0 if no crash was found, 1 if it crashed
@@ -294,7 +294,7 @@ int test_uid_field(char* extractor) {
 
 
 /**
- * Tests tar with gid field with non-ascii characters at each position (one position by one, not all combinations)
+ * Tests tar with gid field all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
  * @return 0 if no crash was found, 1 if it crashed
@@ -349,7 +349,7 @@ int test_gid_field(char* extractor) {
 }
 
 /**
- * Tests tar with size field with non-ascii characters at each position (one position by one, not all combinations)
+ * Tests tar with size field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
  * @return 0 if no crash was found, 1 if it crashed
@@ -405,7 +405,7 @@ int test_size_field(char* extractor) {
 
 
 /**
- * Tests tar with mtime field with non-ascii characters at each position (one position by one, not all combinations)
+ * Tests tar with mtime field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
  * @return 0 if no crash was found, 1 if it crashed
@@ -459,6 +459,62 @@ int test_mtime_field(char* extractor) {
     return 0;
 }
 
+
+/**
+ * Tests tar with typeflag field with all characters
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_typeflag_field(char* extractor) {
+    printf("Testing the field 'typeflag' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int j;
+    char typeflag[1];
+    // By default, the mode is 7 times "0" as the mode has to be null-terminated
+    memset(typeflag, '0', sizeof(typeflag));
+
+    struct tar_t header;
+
+    // Loop through each position in the mode and replace by a character from 0x00 to 0xFF
+
+    for (j = 0x00; j <= 0xFF; j++) {
+
+        typeflag[0] = (char) j;
+
+        // Generate a header with other fields that are correct, only manipulate the mode field
+        generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                            "14413537165", typeflag, "", "ustar", "00", "michal", "michal");
+
+        calculate_checksum(&header);
+
+
+        write_tar_file("test_typeflag.tar", &header);
+
+
+        if (extract(extractor, " test_typeflag.tar") == 1 ) {
+            // The extractor has crashed
+            rename("test_typeflag.tar", "success_typeflag.tar");
+            // Delete the extracted file
+            remove("file.txt");
+            // return 1 to stop the execution as one crash is enough
+            return 1;
+        } else {
+            // Delete the extracted file
+            remove("file.txt");
+            // Keep going, maybe next character will make it crash
+        }
+    }
+
+
+    remove("test_typeflag.tar");
+    return 0;
+}
+
+
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // 1. Test the file name field
@@ -501,6 +557,13 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
         printf("~~~~~It has crashed ! Some characters in the mtime field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the mtime field.~~~~~\n\n");
+    }
+
+    // 7. Test the typeflag field
+    if (test_typeflag_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the typeflag field caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with the typeflag field.~~~~~\n\n");
     }
 
     return 0;
