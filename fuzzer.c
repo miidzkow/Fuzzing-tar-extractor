@@ -90,7 +90,7 @@ int extract(char* extractor) {
     char cmd[51];
     strncpy(cmd, extractor, 25);
     cmd[26] = '\0';
-    strncat(cmd, " testarchive.tar", 25);
+    strncat(cmd, " test_filename.tar", 25);
     char buf[33];
     FILE *fp;
 
@@ -154,8 +154,14 @@ int filename_field(char* extractor) {
     for (i = 0; i < 99; i++) {
         for (j = 0x00; j <= 0xFF; j++) {
 
+            // Skip the ascii characters
+            if (j >= 0x20 && j <= 0x7F) {
+                continue;
+            }
+
             filename[i] = (char) j;
 
+            // Generate a header with other fields that are correct, only manipulate the filename field
             generate_tar_header(&header, filename, "0000664", "0001750", "0001750", "00000000062",
                                 "14413537165", "0", "", "ustar", "00", "michal", "michal");
 
@@ -170,8 +176,6 @@ int filename_field(char* extractor) {
                 change_archive_name("test_filename.tar", "success_filename.tar");
                 // Delete the extracted file
                 remove(filename);
-                // Remove one file that is not removed when running the function. I can't figure out why :(
-                remove("aaaaaaaaaaaaaaaaaaaaaaa)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                 // return 1 to stop the execution as one crash is enough
                 return 1;
             } else {
@@ -184,8 +188,7 @@ int filename_field(char* extractor) {
         filename[i] = 'a';
     }
 
-    // Remove one file that is not removed when running the function. I can't figure out why :(
-    remove("aaaaaaaaaaaaaaaaaaaaaaa)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    remove("test_filename.tar");
     return 0;
 }
 
