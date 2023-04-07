@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdint-gcc.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
 // Header structure
@@ -30,7 +31,7 @@ struct tar_t
  * @param entry: The tar header
  * @return the value of the checksum
  */
-unsigned int calculate_checksum(struct tar_t* entry){
+unsigned int calculate_checksum(struct tar_t* entry) {
     // use spaces for the checksum bytes while calculating the checksum
     memset(entry->chksum, ' ', 8);
 
@@ -53,8 +54,7 @@ unsigned int calculate_checksum(struct tar_t* entry){
 
 void generate_tar_header(struct tar_t *header, const char *name, const char *mode, const char *uid, const char *gid, const char *size,
                          const char *mtime, const char *typeflag, const char *linkname, const char *magic, const char *version,
-                         const char *uname, const char *gname)
-{
+                         const char *uname, const char *gname) {
     // Copy the input parameters into the tar header fields
     strncpy(header->name, name, sizeof(header->name));
     strncpy(header->mode, mode, sizeof(header->mode));
@@ -85,8 +85,7 @@ void write_tar_file(const char* filename, struct tar_t* header) {
     fclose(file);
 }
 
-int extract(char* extractor)
-{
+int extract(char* extractor) {
     int rv = 0;
     char cmd[51];
     strncpy(cmd, extractor, 25);
@@ -101,7 +100,7 @@ int extract(char* extractor)
     }
 
     if(fgets(buf, 33, fp) == NULL) {
-        printf("No output\n");
+        //printf("No output\n");
         goto finally;
     }
     if(strncmp(buf, "*** The program has crashed ***\n", 33)) {
@@ -120,22 +119,89 @@ int extract(char* extractor)
     return rv;
 }
 
-int main(int argc, char* argv[]){
+
+void change_archive_name(char* oldname, char* newname) {
+
+    if (rename(oldname, newname) != 0) {
+        printf("Error renaming file.\n");
+        exit(EXIT_FAILURE);
+    } else {
+        printf("File renamed successfully.\n");
+    }
+}
+
+
+/**
+ * Tests tar with name field with all possibles characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ */
+int filename_field(char* extractor) {
+
+    printf("Testing the field 'name' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char filename[99];
+    // By default, the filename is 99 times "a" as the filename has to be null-terminated
+    memset(filename, 'a', sizeof(filename));
 
     struct tar_t header;
 
-    // Generate header
-    generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
-                        "14413537165", "0", "", "ustar", "00", "michal", "michal");
+    // Loop through each position in the filename and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 99; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
 
-    // Compute the checksum
-    calculate_checksum(&header);
+            filename[i] = (char) j;
 
-    // Write tar archive to file
-    write_tar_file("testarchive.tar", &header);
+            generate_tar_header(&header, filename, "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+            calculate_checksum(&header);
 
 
-    extract(argv[1]);
+            write_tar_file("test_filename.tar", &header);
+
+
+            if (extract(extractor) == 1 ) {
+                // The extractor has crashed
+                change_archive_name("test_filename.tar", "success_filename.tar");
+                // Delete the extracted file
+                remove(filename);
+                // Remove one file that is not removed when running the function. I can't figure out why :(
+                remove("aaaaaaaaaaaaaaaaaaaaaaa)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove(filename);
+                // Keep going, maybe next character or next position will make it crash
+            }
+
+        }
+        filename[i] = 'a';
+    }
+
+    // Remove one file that is not removed when running the function. I can't figure out why :(
+    remove("aaaaaaaaaaaaaaaaaaaaaaa)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    return 0;
+}
+
+
+
+int main(__attribute__((unused)) int argc, char* argv[]) {
+
+
+
+    // 1. Test the file name field
+    if (filename_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the file name field caused a crash.~~~~~\n");
+    } else {
+        printf("~~~~~No issues found with the file name field.~~~~~\n");
+    }
+
 
     return 0;
-};
+}
