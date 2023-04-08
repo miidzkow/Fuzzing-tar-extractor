@@ -570,9 +570,64 @@ int test_linkname_field(char* extractor) {
     return 0;
 }
 
+/**
+ * Tests tar with magic field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_magic_field(char* extractor) {
+    printf("Testing the field 'magic' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char magic[5];
+    // By default, the magic is 5 times "a" as the magic has to be null-terminated
+    memset(magic, 'a', sizeof(magic));
+
+    struct tar_t header;
+
+    // Loop through each position in the magic and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 5; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            magic[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the magic field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "8", "", magic, "00", "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_magic.tar", &header);
+
+
+            if (extract(extractor, " test_magic.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_magic.tar", "success_magic.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        magic[i] = 'a';
+    }
+
+    remove("test_magic.tar");
+    return 0;
+}
+
 
 int main(__attribute__((unused)) int argc, char* argv[]) {
-/*
+
     // 1. Test the file name field
     if (test_filename_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\n\n");
@@ -621,7 +676,6 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     } else {
         printf("~~~~~No issues found with the typeflag field.~~~~~\n\n");
     }
-*/
 
     // 8. Test the linkname field
     if (test_linkname_field(argv[1]) == 1) {
@@ -629,6 +683,16 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     } else {
         printf("~~~~~No issues found with the linkname field.~~~~~\n\n");
     }
+
+
+    // 9. Test the magic field
+    if (test_magic_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the magic field caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with the magic field.~~~~~\n\n");
+    }
+
+    
 
     return 0;
 }
