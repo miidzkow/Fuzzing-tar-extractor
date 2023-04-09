@@ -916,5 +916,24 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
     test_fields_for_all_characters(argv[1]);
 
+    // TODO : check if an incorrect checksum will make it crash
+
+    // TODO : check if a checksum not ending by "0x00 0x20" will make it crash
+
+    // TODO : test all fields if they will work for all null (0x00) characters
+
+    // TODO : test all fields if they can end without the null character
+
+    // TODO : test if filesize can not match with the actual file size (more data than file size)
+
+    // TODO : test if filesize can not match with the actual file size (more data than file size) - with two files in one archive (and data)
+
+    // TODO : test if data can be non-padded
+
+    // TODO : check if a header + non-padded data + header + data will work
+
+    // TODO : check if all numerical values can be negative (size, mtime, mode, uid, gid, checksum)
+
+    // TODO : check if
     return 0;
 }
