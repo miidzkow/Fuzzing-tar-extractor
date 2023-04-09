@@ -639,7 +639,7 @@ int test_version_field(char* extractor) {
 
     int i, j;
     char version[2];
-    // By default, the version is 5 times "0" as the version has to be null-terminated
+    // By default, the version is 2 times "0" 
     memset(version, '0', sizeof(version));
 
     struct tar_t header;
@@ -680,6 +680,116 @@ int test_version_field(char* extractor) {
     return 0;
 }
 
+
+/**
+ * Tests tar with uname field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_uname_field(char* extractor) {
+    printf("Testing the field 'uname' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char uname[31];
+    // By default, the uname is 31 times "a" as the uname has to be null-terminated
+    memset(uname, 'a', sizeof(uname));
+
+    struct tar_t header;
+
+    // Loop through each position in the uname and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 31; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            uname[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the uname field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "8", "", "ustar", "00", uname, "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_uname.tar", &header);
+
+
+            if (extract(extractor, " test_uname.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_uname.tar", "success_uname.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        uname[i] = '0';
+    }
+
+    remove("test_uname.tar");
+    return 0;
+}
+
+/**
+ * Tests tar with gname field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_gname_field(char* extractor) {
+    printf("Testing the field 'gname' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char gname[31];
+    // By default, the gname is 31 times "a" as the gname has to be null-terminated
+    memset(gname, '0', sizeof(gname));
+
+    struct tar_t header;
+
+    // Loop through each position in the gname and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 31; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            gname[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the gname field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "8", "", "ustar", "00", "michal", gname);
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_gname.tar", &header);
+
+
+            if (extract(extractor, " test_gname.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_gname.tar", "success_gname.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        gname[i] = '0';
+    }
+
+    remove("test_gname.tar");
+    return 0;
+}
 
 
 int main(__attribute__((unused)) int argc, char* argv[]) {
@@ -754,6 +864,19 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
         printf("~~~~~No issues found with the version field.~~~~~\n\n");
     }
 
+    // 11. Test the uname field
+    if (test_uname_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the uname field caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with the uname field.~~~~~\n\n");
+    }
+
+    // 12. Test the gname field
+    if (test_gname_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the gname field caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with the gname field.~~~~~\n\n");
+    }
 
     return 0;
 }
