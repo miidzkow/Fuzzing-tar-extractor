@@ -1151,7 +1151,7 @@ int test_wrong_checksum_ending(char* extractor) {
         remove("file.txt");
     }
 
-    //remove("test_wrong_checksum3.tar");
+    remove("test_wrong_checksum3.tar");
 
     return 0;
 }
@@ -1192,7 +1192,7 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
     // TODO : test checksum for other characters
-    //test_fields_for_all_characters(argv[1]);
+    test_fields_for_all_characters(argv[1]);
 
     // Test different possibilities of crashes that could be caused by the checksum field
     // TODO : check if a checksum not ending by "0x00 0x20" will make it crash
