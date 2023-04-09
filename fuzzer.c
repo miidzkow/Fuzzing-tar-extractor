@@ -828,86 +828,86 @@ int test_gname_field(char* extractor) {
 void test_fields_for_all_characters(char* extractor) {
     // 1. Test the file name field
     if (test_filename_field(extractor)) {
-        printf("~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the file name field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the file name field.~~~~~\033[0m\n\n");
     }
 
     // 2. Test the mode field
     if (test_mode_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the mode field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the mode field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the mode field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the mode field.~~~~~\033[0m\n\n");
     }
 
     // 3. Test the uid field
     if (test_uid_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the uid field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the uid field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the uid field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the uid field.~~~~~\033[0m\n\n");
     }
 
     // 4. Test the gid field
     if (test_gid_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the gid field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the gid field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the gid field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the gid field.~~~~~\033[0m\n\n");
     }
 
     // 5. Test the size field
     if (test_size_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the size field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the size field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the size field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the size field.~~~~~\033[0m\n\n");
     }
 
     // 6. Test the mtime field
     if (test_mtime_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the mtime field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the mtime field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the mtime field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the mtime field.~~~~~\033[0m\n\n");
     }
 
     // 7. Test the typeflag field
     if (test_typeflag_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the typeflag field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the typeflag field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the typeflag field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the typeflag field.~~~~~\033[0m\n\n");
     }
 
     // 8. Test the linkname field
     if (test_linkname_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the linkname field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the linkname field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the linkname field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the linkname field.~~~~~\033[0m\n\n");
     }
 
     // 9. Test the magic field
     if (test_magic_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the magic field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the magic field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the magic field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the magic field.~~~~~\033[0m\n\n");
     }
 
     // 10. Test the version field
     if (test_version_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the version field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the version field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the version field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the version field.~~~~~\033[0m\n\n");
     }
 
     // 11. Test the uname field
     if (test_uname_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the uname field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the uname field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the uname field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the uname field.~~~~~\033[0m\n\n");
     }
 
     // 12. Test the gname field
     if (test_gname_field(extractor)) {
-        printf("~~~~~It has crashed ! Some characters in the gname field caused a crash.~~~~~\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the gname field caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with the gname field.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with the gname field.~~~~~\033[0m\n\n");
     }
 }
 
@@ -998,7 +998,7 @@ void test_checksum(char* extractor) {
 
     // 1. Test if a header with an incorrect (but octal) checksum value will make it crash
     if (test_wrong_checksum_value(extractor)) {
-        printf("\033[32m~~~~~It has crashed ! An incorrect (octal) checksum value has caused a crash.~~~~~\033[0m\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! An incorrect (octal) checksum value has caused a crash.~~~~~\033[0m\n\n");
     } else {
         printf("\033[1;31m~~~~~No issues found with an incorrect (octal) checksum value.~~~~~\033[0m\n\n");
 
@@ -1006,7 +1006,7 @@ void test_checksum(char* extractor) {
 
     // 2. Test if a header with an incorrect (but non-octal) checksum value will make it crash
     if (test_wrong_checksum_value_non_octal(extractor)) {
-        printf("\033[32m~~~~~It has crashed ! An incorrect (non-octal) checksum value has caused a crash.~~~~~\033[0m\n\n");
+        printf("\033[1;32m~~~~~It has crashed ! An incorrect (non-octal) checksum value has caused a crash.~~~~~\033[0m\n\n");
     } else {
         printf("\033[1;31m~~~~~No issues found with an incorrect (non-octal) checksum value.~~~~~\033[0m\n\n");
     }
