@@ -951,6 +951,44 @@ int test_wrong_checksum_value(char* extractor) {
 }
 
 
+int test_wrong_checksum_value_non_octal(char* extractor) {
+    printf("Testing a header with a wrong checksum (non-octal value).\n"
+           "        > File without data, as the data is not used to compute the checksum.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the mode field
+    generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                        "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+    // Write an incorrect checksum instead of calculating the correct one
+    char checksum_str[8] = "791852";
+    checksum_str[6] = '\0';
+    checksum_str[7] = '\x20';
+
+    // memcpy instead of strncpy as it does not care about null terminators
+    memcpy(header.chksum, checksum_str, sizeof(header.chksum));
+
+    write_tar_file("test_wrong_checksum2.tar", &header);
+
+    if (extract(extractor, " test_wrong_checksum2.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_wrong_checksum2.tar", "success_wrong_checksum2.tar");
+        // Delete the extracted file
+        remove("file.txt");
+        // return 1 to stop the execution as one crash is enough
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("file.txt");
+    }
+
+    remove("test_wrong_checksum2.tar");
+
+    return 0;
+}
+
 /**
  * Test different possibilities of crashes that could be caused by the checksum field
  * On files without data
@@ -958,11 +996,19 @@ int test_wrong_checksum_value(char* extractor) {
  */
 void test_checksum(char* extractor) {
 
-    // 1. Test if a header with an incorrect checksum value will make it crash
+    // 1. Test if a header with an incorrect (but octal) checksum value will make it crash
     if (test_wrong_checksum_value(extractor)) {
-        printf("~~~~~It has crashed ! An incorrect checksum value has caused a crash.~~~~~\n\n");
+        printf("\033[32m~~~~~It has crashed ! An incorrect (octal) checksum value has caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("~~~~~No issues found with an incorrect checksum value.~~~~~\n\n");
+        printf("\033[1;31m~~~~~No issues found with an incorrect (octal) checksum value.~~~~~\033[0m\n\n");
+
+    }
+
+    // 2. Test if a header with an incorrect (but non-octal) checksum value will make it crash
+    if (test_wrong_checksum_value_non_octal(extractor)) {
+        printf("\033[32m~~~~~It has crashed ! An incorrect (non-octal) checksum value has caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with an incorrect (non-octal) checksum value.~~~~~\033[0m\n\n");
     }
 }
 
