@@ -821,6 +821,67 @@ int test_gname_field(char* extractor) {
 
 
 /**
+ * Tests tar with checksum field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_checksum_field(char* extractor) {
+    printf("Testing the field 'checksum' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char checksum_str[8];
+    // By default, the checksum is 6 times "a" as the checksum has to be terminated by "\0 "
+    memset(checksum_str, 'a', sizeof(checksum_str));
+
+
+    struct tar_t header;
+
+    // Loop through each position (but the last two one) in the checksum and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 6; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            checksum_str[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the checksum field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "8", "", "ustar", "00", "michal", "michal");
+
+            // Write the checksum instead of calculating the correct one
+            checksum_str[6] = '\0';
+            checksum_str[7] = '\x20';
+
+            // memcpy instead of strncpy as it does not care about null terminators
+            memcpy(header.chksum, checksum_str, sizeof(header.chksum));
+
+            write_tar_file("test_checksum.tar", &header);
+
+
+            if (extract(extractor, " test_checksum.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_checksum.tar", "success_checksum.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        checksum_str[i] = 'a';
+    }
+
+    remove("test_checksum.tar");
+    return 0;
+}
+
+
+/**
  * Tests all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF
  * On files without data
  * One file in archive 
@@ -908,6 +969,13 @@ void test_fields_for_all_characters(char* extractor) {
         printf("\033[1;32m~~~~~It has crashed ! Some characters in the gname field caused a crash.~~~~~\033[0m\n\n");
     } else {
         printf("\033[1;31m~~~~~No issues found with the gname field.~~~~~\033[0m\n\n");
+    }
+
+    // 13. Test the gname field
+    if (test_checksum_field(extractor)) {
+        printf("\033[1;32m~~~~~It has crashed ! Some characters in the checksum field caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with the checksum field.~~~~~\033[0m\n\n");
     }
 }
 
