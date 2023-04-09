@@ -625,6 +625,62 @@ int test_magic_field(char* extractor) {
     return 0;
 }
 
+/**
+ * Tests tar with version field with all characters at each position (one position by one, not all combinations)
+ * File without data
+ * Single file in archive
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_version_field(char* extractor) {
+    printf("Testing the field 'version' with all characters for each possible position (position by position).\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+
+    int i, j;
+    char version[2];
+    // By default, the version is 5 times "0" as the version has to be null-terminated
+    memset(version, '0', sizeof(version));
+
+    struct tar_t header;
+
+    // Loop through each position in the version and replace by a character from 0x00 to 0xFF
+    for (i = 0; i < 2; i++) {
+        for (j = 0x00; j <= 0xFF; j++) {
+
+            version[i] = (char) j;
+
+            // Generate a header with other fields that are correct, only manipulate the version field
+            generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                                "14413537165", "8", "", "ustar", version, "michal", "michal");
+
+            calculate_checksum(&header);
+
+
+            write_tar_file("test_version.tar", &header);
+
+
+            if (extract(extractor, " test_version.tar") == 1 ) {
+                // The extractor has crashed
+                rename("test_version.tar", "success_version.tar");
+                // Delete the extracted file
+                remove("file.txt");
+                // return 1 to stop the execution as one crash is enough
+                return 1;
+            } else {
+                // Delete the extracted file
+                remove("file.txt");
+                // Keep going, maybe next character or next position will make it crash
+            }
+        }
+        version[i] = '0';
+    }
+
+    remove("test_version.tar");
+    return 0;
+}
+
+
 
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
@@ -684,7 +740,6 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
         printf("~~~~~No issues found with the linkname field.~~~~~\n\n");
     }
 
-
     // 9. Test the magic field
     if (test_magic_field(argv[1]) == 1) {
         printf("~~~~~It has crashed ! Some characters in the magic field caused a crash.~~~~~\n\n");
@@ -692,7 +747,13 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
         printf("~~~~~No issues found with the magic field.~~~~~\n\n");
     }
 
-    
+    // 10. Test the version field
+    if (test_version_field(argv[1]) == 1) {
+        printf("~~~~~It has crashed ! Some characters in the version field caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with the version field.~~~~~\n\n");
+    }
+
 
     return 0;
 }
