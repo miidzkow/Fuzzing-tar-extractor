@@ -51,7 +51,22 @@ unsigned int calculate_checksum(struct tar_t* entry) {
 }
 
 
-
+/**
+ * Generates a tar header given the inputed values
+ * @param header
+ * @param name
+ * @param mode
+ * @param uid
+ * @param gid
+ * @param size
+ * @param mtime
+ * @param typeflag
+ * @param linkname
+ * @param magic
+ * @param version
+ * @param uname
+ * @param gname
+ */
 void generate_tar_header(struct tar_t *header, const char *name, const char *mode, const char *uid, const char *gid, const char *size,
                          const char *mtime, const char *typeflag, const char *linkname, const char *magic, const char *version,
                          const char *uname, const char *gname) {
@@ -74,6 +89,11 @@ void generate_tar_header(struct tar_t *header, const char *name, const char *mod
     strncpy(header->padding, "", sizeof(header->padding));
 }
 
+/**
+ * Creates a .tar archive
+ * @param filename name of the archive to be created
+ * @param header header data to be added in the tar archive
+ */
 void write_tar_file(const char* filename, struct tar_t* header) {
     // Open file for writing in binary mode
     FILE* file = fopen(filename, "wb");
@@ -85,6 +105,13 @@ void write_tar_file(const char* filename, struct tar_t* header) {
     fclose(file);
 }
 
+/**
+ * Creates a .tar archive of a file with data and padding
+ * @param filename name of the archive to be created
+ * @param header header data to be added in the tar archive
+ * @param data data that has to be added
+ * @param data_len data size used to calculate the padding
+ */
 void write_tar_file_with_data(const char* filename, struct tar_t* header, const char* data, int data_len) {
     // Open file for writing in binary mode
     FILE* file = fopen(filename, "wb");
@@ -108,6 +135,14 @@ void write_tar_file_with_data(const char* filename, struct tar_t* header, const 
 }
 
 
+/**
+ * Function that calls the external extractor with the file to be extracted
+ * @param extractor the extractor that will be used
+ * @param filename name of the tar archive to be extracted
+ * @return -1 if the executable cannot be launched,
+ *          0 if it is launched but does not crash,
+ *          1 if it is launched and it crashed.
+ */
 int extract(char* extractor, char * filename) {
     int rv = 0;
     char cmd[51];
@@ -147,6 +182,7 @@ int extract(char* extractor, char * filename) {
  * Tests tar with name field with all non-ascii characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_filename_field(char* extractor) {
@@ -209,6 +245,7 @@ int test_filename_field(char* extractor) {
  * Tests tar with mode field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_mode_field(char* extractor) {
@@ -265,6 +302,7 @@ int test_mode_field(char* extractor) {
  * Tests tar with uid field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_uid_field(char* extractor) {
@@ -321,6 +359,7 @@ int test_uid_field(char* extractor) {
  * Tests tar with gid field all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_gid_field(char* extractor) {
@@ -377,6 +416,7 @@ int test_gid_field(char* extractor) {
  * Tests tar with size field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_size_field(char* extractor) {
@@ -489,6 +529,7 @@ int test_mtime_field(char* extractor) {
  * Tests tar with typeflag field with all characters
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_typeflag_field(char* extractor) {
@@ -544,6 +585,7 @@ int test_typeflag_field(char* extractor) {
  * Tests tar with linkname field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_linkname_field(char* extractor) {
@@ -600,6 +642,7 @@ int test_linkname_field(char* extractor) {
  * Tests tar with magic field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_magic_field(char* extractor) {
@@ -656,6 +699,7 @@ int test_magic_field(char* extractor) {
  * Tests tar with version field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_version_field(char* extractor) {
@@ -712,6 +756,7 @@ int test_version_field(char* extractor) {
  * Tests tar with uname field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_uname_field(char* extractor) {
@@ -768,6 +813,7 @@ int test_uname_field(char* extractor) {
  * Tests tar with gname field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_gname_field(char* extractor) {
@@ -824,6 +870,7 @@ int test_gname_field(char* extractor) {
  * Tests tar with checksum field with all characters at each position (one position by one, not all combinations)
  * File without data
  * Single file in archive
+ * @param extractor the extractor that will be used
  * @return 0 if no crash was found, 1 if it crashed
  */
 int test_checksum_field(char* extractor) {
@@ -884,7 +931,8 @@ int test_checksum_field(char* extractor) {
 /**
  * Tests all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF
  * On files without data
- * One file in archive 
+ * One file in archive
+ * @param extractor the extractor that will be used
  */
 void test_fields_for_all_characters(char* extractor) {
     // 1. Test the file name field
@@ -979,7 +1027,11 @@ void test_fields_for_all_characters(char* extractor) {
     }
 }
 
-
+/**
+ * Tests tar with checksum field with incorrect but octal value
+ * @param extractor the extractor that will be used
+ * @return 0 if no crash was found, 1 if it crashed
+ */
 int test_wrong_checksum_value(char* extractor) {
     printf("Testing a header with a wrong checksum (octal value).\n"
            "        > File without data, as the data is not used to compute the checksum.\n"
@@ -1019,6 +1071,11 @@ int test_wrong_checksum_value(char* extractor) {
 }
 
 
+/**
+ * Tests tar with checksum field with incorrect and non-octal value
+ * @param extractor the extractor that will be used
+ * @return 0 if no crash was found, 1 if it crashed
+ */
 int test_wrong_checksum_value_non_octal(char* extractor) {
     printf("Testing a header with a wrong checksum (non-octal value).\n"
            "        > File without data, as the data is not used to compute the checksum.\n"
@@ -1057,6 +1114,49 @@ int test_wrong_checksum_value_non_octal(char* extractor) {
     return 0;
 }
 
+
+/**
+ * Tests tar with checksum field with incorrect value and wrongly terminated
+ * @param extractor the extractor that will be used
+ * @return 0 if no crash was found, 1 if it crashed
+ */
+int test_wrong_checksum_ending(char* extractor) {
+    printf("Testing a header with a wrong checksum (not ended by '0x00 0x20').\n"
+           "        > File without data, as the data is not used to compute the checksum.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the mode field
+    generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                        "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+    // Write an incorrect checksum instead of calculating the correct one
+    char checksum_str[8] = "72125211";
+
+    // memcpy instead of strncpy as it does not care about null terminators
+    memcpy(header.chksum, checksum_str, sizeof(header.chksum));
+
+    write_tar_file("test_wrong_checksum3.tar", &header);
+
+    if (extract(extractor, " test_wrong_checksum3.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_wrong_checksum3.tar", "success_wrong_checksum3.tar");
+        // Delete the extracted file
+        remove("file.txt");
+        // return 1 to stop the execution as one crash is enough
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("file.txt");
+    }
+
+    //remove("test_wrong_checksum3.tar");
+
+    return 0;
+}
+
+
 /**
  * Test different possibilities of crashes that could be caused by the checksum field
  * On files without data
@@ -1078,6 +1178,13 @@ void test_checksum(char* extractor) {
     } else {
         printf("\033[1;31m~~~~~No issues found with an incorrect (non-octal) checksum value.~~~~~\033[0m\n\n");
     }
+
+    // 3. Test if a header with an incorrect (octal) checksum value, not ended with '0x00 0x20' will make it crash
+    if (test_wrong_checksum_ending(extractor)) {
+        printf("\033[1;32m~~~~~It has crashed ! An incorrect (octal) checksum value not ended with '0x00 0x20' has caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with an incorrect (octal) checksum value not ended with '0x00 0x20'.~~~~~\033[0m\n\n");
+    }
 }
 
 
@@ -1085,7 +1192,7 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
     // TODO : test checksum for other characters
-    test_fields_for_all_characters(argv[1]);
+    //test_fields_for_all_characters(argv[1]);
 
     // Test different possibilities of crashes that could be caused by the checksum field
     // TODO : check if a checksum not ending by "0x00 0x20" will make it crash
