@@ -911,14 +911,72 @@ void test_fields_for_all_characters(char* extractor) {
     }
 }
 
+
+int test_wrong_checksum_value(char* extractor) {
+    printf("Testing a header with a wrong checksum (octal value).\n"
+           "        > File without data, as the data is not used to compute the checksum.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the mode field
+    generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                        "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+    // Write an incorrect checksum instead of calculating the correct one
+    char checksum_str[8] = "741652";
+    checksum_str[6] = '\0';
+    checksum_str[7] = '\x20';
+
+    // memcpy instead of strncpy as it does not care about null terminators
+    memcpy(header.chksum, checksum_str, sizeof(header.chksum));
+
+    write_tar_file("test_wrong_checksum.tar", &header);
+
+    if (extract(extractor, " test_wrong_checksum.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_wrong_checksum.tar", "success_wrong_checksum.tar");
+        // Delete the extracted file
+        remove("file.txt");
+        // return 1 to stop the execution as one crash is enough
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("file.txt");
+    }
+
+    remove("test_wrong_checksum.tar");
+
+    return 0;
+}
+
+
+/**
+ * Test different possibilities of crashes that could be caused by the checksum field
+ * On files without data
+ * One file in archive
+ */
+void test_checksum(char* extractor) {
+
+    // 1. Test if a header with an incorrect checksum value will make it crash
+    if (test_wrong_checksum_value(extractor)) {
+        printf("~~~~~It has crashed ! An incorrect checksum value has caused a crash.~~~~~\n\n");
+    } else {
+        printf("~~~~~No issues found with an incorrect checksum value.~~~~~\n\n");
+    }
+}
+
+
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
+    // TODO : test checksum for other characters
     test_fields_for_all_characters(argv[1]);
 
-    // TODO : check if an incorrect checksum will make it crash
-
+    // Test different possibilities of crashes that could be caused by the checksum field
     // TODO : check if a checksum not ending by "0x00 0x20" will make it crash
+    test_checksum(argv[1]);
+
 
     // TODO : test all fields if they will work for all null (0x00) characters
 
