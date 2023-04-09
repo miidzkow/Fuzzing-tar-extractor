@@ -85,6 +85,29 @@ void write_tar_file(const char* filename, struct tar_t* header) {
     fclose(file);
 }
 
+void write_tar_file_with_data(const char* filename, struct tar_t* header, const char* data, int data_len) {
+    // Open file for writing in binary mode
+    FILE* file = fopen(filename, "wb");
+
+    // Write the header to the file
+    fwrite(header, sizeof(struct tar_t), 1, file);
+
+    // Write the data to the file
+    fwrite(data, sizeof(char), data_len, file);
+
+    // Pad the data with null bytes (it has to be a 512-byte block)
+    int padding_len = 512 - (data_len % 512);
+    if (padding_len != 512) {
+        char padding[padding_len];
+        memset(padding, 0, padding_len);
+        fwrite(padding, sizeof(char), padding_len, file);
+    }
+
+    // Close the file
+    fclose(file);
+}
+
+
 int extract(char* extractor, char * filename) {
     int rv = 0;
     char cmd[51];
@@ -180,6 +203,7 @@ int test_filename_field(char* extractor) {
     remove("test_filename.tar");
     return 0;
 }
+
 
 /**
  * Tests tar with mode field with all characters at each position (one position by one, not all combinations)
@@ -347,6 +371,7 @@ int test_gid_field(char* extractor) {
     remove("test_gid.tar");
     return 0;
 }
+
 
 /**
  * Tests tar with size field with all characters at each position (one position by one, not all combinations)
@@ -570,6 +595,7 @@ int test_linkname_field(char* extractor) {
     return 0;
 }
 
+
 /**
  * Tests tar with magic field with all characters at each position (one position by one, not all combinations)
  * File without data
@@ -624,6 +650,7 @@ int test_magic_field(char* extractor) {
     remove("test_magic.tar");
     return 0;
 }
+
 
 /**
  * Tests tar with version field with all characters at each position (one position by one, not all combinations)
@@ -736,6 +763,7 @@ int test_uname_field(char* extractor) {
     return 0;
 }
 
+
 /**
  * Tests tar with gname field with all characters at each position (one position by one, not all combinations)
  * File without data
@@ -792,91 +820,101 @@ int test_gname_field(char* extractor) {
 }
 
 
-int main(__attribute__((unused)) int argc, char* argv[]) {
-
+/**
+ * Tests all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF
+ * On files without data
+ * One file in archive 
+ */
+void test_fields_for_all_characters(char* extractor) {
     // 1. Test the file name field
-    if (test_filename_field(argv[1]) == 1) {
+    if (test_filename_field(extractor)) {
         printf("~~~~~It has crashed ! Some non-ascii characters in the file name field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the file name field.~~~~~\n\n");
     }
 
     // 2. Test the mode field
-    if (test_mode_field(argv[1]) == 1) {
+    if (test_mode_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the mode field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the mode field.~~~~~\n\n");
     }
 
     // 3. Test the uid field
-    if (test_uid_field(argv[1]) == 1) {
+    if (test_uid_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the uid field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the uid field.~~~~~\n\n");
     }
 
     // 4. Test the gid field
-    if (test_gid_field(argv[1]) == 1) {
+    if (test_gid_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the gid field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the gid field.~~~~~\n\n");
     }
 
     // 5. Test the size field
-    if (test_size_field(argv[1]) == 1) {
+    if (test_size_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the size field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the size field.~~~~~\n\n");
     }
 
     // 6. Test the mtime field
-    if (test_mtime_field(argv[1]) == 1) {
+    if (test_mtime_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the mtime field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the mtime field.~~~~~\n\n");
     }
 
     // 7. Test the typeflag field
-    if (test_typeflag_field(argv[1]) == 1) {
+    if (test_typeflag_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the typeflag field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the typeflag field.~~~~~\n\n");
     }
 
     // 8. Test the linkname field
-    if (test_linkname_field(argv[1]) == 1) {
+    if (test_linkname_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the linkname field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the linkname field.~~~~~\n\n");
     }
 
     // 9. Test the magic field
-    if (test_magic_field(argv[1]) == 1) {
+    if (test_magic_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the magic field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the magic field.~~~~~\n\n");
     }
 
     // 10. Test the version field
-    if (test_version_field(argv[1]) == 1) {
+    if (test_version_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the version field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the version field.~~~~~\n\n");
     }
 
     // 11. Test the uname field
-    if (test_uname_field(argv[1]) == 1) {
+    if (test_uname_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the uname field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the uname field.~~~~~\n\n");
     }
 
     // 12. Test the gname field
-    if (test_gname_field(argv[1]) == 1) {
+    if (test_gname_field(extractor)) {
         printf("~~~~~It has crashed ! Some characters in the gname field caused a crash.~~~~~\n\n");
     } else {
         printf("~~~~~No issues found with the gname field.~~~~~\n\n");
     }
+}
+
+int main(__attribute__((unused)) int argc, char* argv[]) {
+
+    // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
+    test_fields_for_all_characters(argv[1]);
 
     return 0;
 }
