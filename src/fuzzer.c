@@ -1577,7 +1577,7 @@ void test_numerical_fields(char* extractor) {
     if (test_value_mtime(extractor, "77777777777")) {
         printf("\033[1;32m~~~~~It has crashed ! A too big mtime value caused a crash.~~~~~\033[0m\n\n");
     } else {
-        printf("\033[1;31m~~~~~No issues found wi th a too big mtime value.~~~~~\033[0m\n\n");
+        printf("\033[1;31m~~~~~No issues found with a too big mtime value.~~~~~\033[0m\n\n");
     }
     
     // 4. Test negative value for uid
@@ -1606,7 +1606,7 @@ void test_numerical_fields(char* extractor) {
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
-    //test_fields_for_all_characters(argv[1]);
+    test_fields_for_all_characters(argv[1]);
 
     // Test different possibilities of crashes that could be caused by the checksum field
     test_checksum(argv[1]);
