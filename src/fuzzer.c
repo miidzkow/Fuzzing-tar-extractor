@@ -1468,6 +1468,140 @@ void test_wrong_filesize(char* extractor) {
     }
 }
 
+int test_value_uid(char* extractor, char* uid_value) {
+    printf("Testing the field 'uid' with an incorrect octal value.\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+    
+struct tar_t header;
+
+        // Generate a header with other fields that are correct, only manipulate the uid field
+        generate_tar_header(&header, "file.txt", "0000664", uid_value, "0001750", "00000000062",
+                            "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+        calculate_checksum(&header);
+        
+        write_tar_file("test_uid_value.tar", &header);
+
+        if (extract(extractor, " test_uid_value.tar") == 1 ) {
+            // The extractor has crashed
+            rename("test_uid_value.tar", "success_uid_value.tar");
+            // Delete the extracted file
+            remove("file.txt");
+            return 1;
+        } else {
+            // Delete the extracted file
+            remove("file.txt");
+        }
+        remove("test_uid_value.tar");
+        return 0;
+}
+
+
+int test_value_gid(char* extractor, char* gid_value) {
+    printf("Testing the field 'gid' with an incorrect octal value.\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the gid field
+    generate_tar_header(&header, "file.txt", "0000664", "0001750", gid_value, "00000000062",
+                        "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+    calculate_checksum(&header);
+
+    write_tar_file("test_gid_value.tar", &header);
+
+    if (extract(extractor, " test_gid_value.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_gid_value.tar", "success_gid_value.tar");
+        // Delete the extracted file
+        remove("file.txt");
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("file.txt");
+    }
+    remove("test_gid_value.tar");
+    return 0;
+}
+
+int test_value_mtime(char* extractor, char* mtime_value) {
+    printf("Testing the field 'mtime' with an incorrect octal value.\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the mtime field
+    generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", "00000000062",
+                        mtime_value, "0", "", "ustar", "00", "michal", "michal");
+
+    calculate_checksum(&header);
+
+    write_tar_file("test_mtime_value.tar", &header);
+
+    if (extract(extractor, " test_mtime_value.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_mtime_value.tar", "success_mtime_value.tar");
+        // Delete the extracted file
+        remove("file.txt");
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("file.txt");
+    }
+    remove("test_mtime_value.tar");
+    return 0;
+}
+
+
+void test_numerical_fields(char* extractor) {
+
+    // 1. Test too big value for uid
+    if (test_value_uid(extractor, "7777777")) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big uid value caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a too big uid value.~~~~~\033[0m\n\n");
+    }
+
+    // 2. Test too big value for gid
+    if (test_value_uid(extractor, "7777777")) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big uid value caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a too big uid value.~~~~~\033[0m\n\n");
+    }
+    
+    // 3. Test too big value for mtime
+    if (test_value_mtime(extractor, "77777777777")) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big mtime value caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found wi th a too big mtime value.~~~~~\033[0m\n\n");
+    }
+    
+    // 4. Test negative value for uid
+    if (test_value_gid(extractor, "1777400")) {
+        printf("\033[1;32m~~~~~It has crashed ! A negative gid value caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a negative gid value.~~~~~\033[0m\n\n");
+    }
+
+    // 5. Test negative value for gid
+    if (test_value_gid(extractor, "1777400")) {
+        printf("\033[1;32m~~~~~It has crashed ! A negative gid value caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a negative gid value.~~~~~\033[0m\n\n");
+    }
+    
+    // 6. Test negative value for mtime
+    if (test_value_mtime(extractor, "11111777400")) {
+        printf("\033[1;32m~~~~~It has crashed ! A negative mtime value caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a negative mtime value.~~~~~\033[0m\n\n");
+    }
+}
+
 
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
@@ -1483,16 +1617,14 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     // Test conducted on filesize (with and without data)
     test_wrong_filesize(argv[1]);
 
+    // Test too high values for numerical fields
+    test_numerical_fields(argv[1]);
 
     // TODO : test if data can be non-padded
 
     // TODO : check if a header + non-padded data + header + data will work
 
-    // TODO : check if all numerical values can be negative (size, mtime, mode, uid, gid, checksum)
-
     // TODO : test all fields if they can end without the null character
-
-    // TODO : try extracting a file that does not exist
 
     return 0;
 }
