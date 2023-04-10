@@ -1483,9 +1483,6 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     // Test conducted on filesize (with and without data)
     test_wrong_filesize(argv[1]);
 
-    // TODO : test if filesize can not match with the actual file size (more data than file size)
-
-    // TODO : test if filesize can not match with the actual file size (more data than file size) - with two files in one archive (and data)
 
     // TODO : test if data can be non-padded
 
