@@ -1019,12 +1019,13 @@ void test_fields_for_all_characters(char* extractor) {
         printf("\033[1;31m~~~~~No issues found with the gname field.~~~~~\033[0m\n\n");
     }
 
-    // 13. Test the gname field
+    // 13. Test the checksum field
     if (test_checksum_field(extractor)) {
         printf("\033[1;32m~~~~~It has crashed ! Some characters in the checksum field caused a crash.~~~~~\033[0m\n\n");
     } else {
         printf("\033[1;31m~~~~~No issues found with the checksum field.~~~~~\033[0m\n\n");
     }
+
 }
 
 /**
@@ -1191,11 +1192,9 @@ void test_checksum(char* extractor) {
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
-    // TODO : test checksum for other characters
     test_fields_for_all_characters(argv[1]);
 
     // Test different possibilities of crashes that could be caused by the checksum field
-    // TODO : check if a checksum not ending by "0x00 0x20" will make it crash
     test_checksum(argv[1]);
 
 
