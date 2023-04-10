@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 
 // Header structure
@@ -1272,10 +1273,206 @@ void test_null_characters(char* extractor) {
 }
 
 
+int test_filesize(char* extractor, bool too_big, bool too_small, bool with_data, bool multiple_files) {
+    printf("Testing a tar archive for an incorrect filesize value.\n");
+
+    struct tar_t header;
+
+    // Set the size, either too big or too small
+    char *size;
+    if (too_big) {
+        size = "77777779999";
+    } else if (too_small) {
+        size = "00000000001";
+    }
+
+    // Generate a header with other fields that are correct, only manipulate the mode field
+
+    generate_tar_header(&header, "file.txt", "0000664", "0001750", "0001750", size,
+                        "14413537165", "0", "", "ustar", "00", "michal", "michal");
+
+    calculate_checksum(&header);
+
+    char* archive_name;
+
+    // File with data
+    if (with_data){
+        printf(           "        > File with data.\n");
+        if (too_big) {
+            printf(           "        > Filesize bigger than the actual size.\n");
+            if (multiple_files){
+                printf(           "        > Multiple files in archive.\n");
+                archive_name = "test_size_big3.tar";
+            } else {
+                printf(           "        > Single file in archive.\n");
+                archive_name = "test_size_big1.tar";
+            }
+        } else if (too_small) {
+            printf(           "        > Filesize smaller than the actual size.\n");
+
+            if (multiple_files) {
+                printf(           "        > Multiple files in archive.\n");
+                archive_name = "test_size_small3.tar";
+            } else {
+                printf(           "        > Single file in archive.\n");
+                archive_name = "test_size_small1.tar";
+            }
+        }
+        write_tar_file_with_data(archive_name, &header, "aaaaaaaaaaaaaaaaaaaa", 20);
+
+    } else {
+        // File without data
+        printf(           "        > File without data.\n");
+        if (too_big) {
+            printf(           "        > Filesize bigger than the actual size.\n");
+            if (multiple_files){
+                printf(           "        > Multiple files in archive.\n");
+                archive_name = "test_size_big4.tar";
+            } else {
+                printf(           "        > Single file in archive.\n");
+                archive_name = "test_size_big2.tar";
+            }
+        } else if (too_small) {
+            printf(           "        > Filesize smaller than the actual size.\n");
+            if (multiple_files) {
+                printf(           "        > Multiple files in archive.\n");
+                archive_name = "test_size_small4.tar";
+            } else {
+                printf(           "        > Single file in archive.\n");
+                archive_name = "test_size_small2.tar";
+            }
+        }
+        write_tar_file(archive_name, &header);
+    }
+
+    char* space_name = malloc(strlen(archive_name) + 2);
+    strcpy(space_name, " ");
+    strcat(space_name, archive_name);
+
+
+    if (extract(extractor, space_name) == 1 ) {
+        // The extractor has crashed
+        if (strcmp(archive_name, "test_size_big1.tar") == 0) {
+            rename("test_size_big1.tar", "success_size_big1.tar");
+        } else if (strcmp(archive_name, "test_size_small1.tar") == 0) {
+            rename("test_size_small1.tar", "success_size_small1.tar");
+        } else if (strcmp(archive_name, "test_size_big2.tar") == 0) {
+            rename("test_size_big2.tar", "success_size_big2.tar");
+        } else if (strcmp(archive_name, "test_size_small2.tar") == 0) {
+            rename("test_size_small2.tar", "success_size_small2.tar");
+        } else if (strcmp(archive_name, "test_size_big3.tar") == 0) {
+            rename("test_size_big3.tar", "success_size_big3.tar");
+        } else if (strcmp(archive_name, "test_size_small3.tar") == 0) {
+            rename("test_size_small3.tar", "success_size_small3.tar");
+        } else if (strcmp(archive_name, "test_size_big4.tar") == 0) {
+            rename("test_size_big4.tar", "success_size_big4.tar");
+        } else if (strcmp(archive_name, "test_size_small4.tar") == 0) {
+            rename("test_size_small4.tar", "success_size_small4.tar");
+        }
+
+        
+        // Delete the extracted file(s)
+        remove("file.txt");
+        if (multiple_files) {
+            remove ("file2.txt");
+        }
+        free(space_name);
+        return 1;
+    } else {
+        // Delete the extracted file(s)
+        remove("file.txt");
+        if (multiple_files) {
+            remove ("file2.txt");
+        }
+    }
+
+    if (strcmp(archive_name, "test_size_big1.tar") == 0) {
+        remove("test_size_big1.tar");
+    } else if (strcmp(archive_name, "test_size_big2.tar") == 0) {
+        remove("test_size_big2.tar");
+    } else if (strcmp(archive_name, "test_size_big3.tar") == 0) {
+        remove("test_size_big3.tar");
+    } else if (strcmp(archive_name, "test_size_big4.tar") == 0) {
+        remove("test_size_big4.tar");
+    } else if (strcmp(archive_name, "test_size_small1.tar") == 0) {
+        remove("test_size_small1.tar");
+    } else if (strcmp(archive_name, "test_size_small2.tar") == 0) {
+        remove("test_size_small2.tar");
+    } else if (strcmp(archive_name, "test_size_small3.tar") == 0) {
+        remove("test_size_small3.tar");
+    } else if (strcmp(archive_name, "test_size_small4.tar") == 0) {
+        remove("test_size_small4.tar");
+    }
+
+    free(space_name);
+    return 0;
+}
+
+
+void test_wrong_filesize(char* extractor) {
+
+    // 1. Test filesize value too big, without data, single file in archive
+    if (test_filesize(extractor, true, false, false, false)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big filesize value caused a crash (no data, single file).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 2. Test filesize value too small, without data, single file in archive
+    if (test_filesize(extractor, false, true, false, false)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too small filesize value caused a crash (no data, single file).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 3. Test filesize value too big, with data, single file in archive
+    if (test_filesize(extractor, true, false, true, false)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big filesize value caused a crash (with data, single file).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 4. Test filesize value too big, with data, single file in archive
+    if (test_filesize(extractor, false, true, true, false)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too small filesize value caused a crash (with data, single file).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 5. Test filesize value too big, without data, multiple files in archive
+    if (test_filesize(extractor, true, false, false, true)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big filesize value caused a crash (no data, multiple files).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 6. Test filesize value too small, without data, multiple files in archive
+    if (test_filesize(extractor, false, true, false, true)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too small filesize value caused a crash (no data, multiple files).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 7. Test filesize value too big, with data, multiple files in archive
+    if (test_filesize(extractor, true, false, true, true)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too big filesize value caused a crash (with data, multiple files).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+
+    // 8. Test filesize value too big, with data, multiple files in archive
+    if (test_filesize(extractor, false, true, true, true)) {
+        printf("\033[1;32m~~~~~It has crashed ! A too small filesize value caused a crash (with data, multiple files).~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with filesize value.~~~~~\033[0m\n\n");
+    }
+}
+
+
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
-    test_fields_for_all_characters(argv[1]);
+    //test_fields_for_all_characters(argv[1]);
 
     // Test different possibilities of crashes that could be caused by the checksum field
     test_checksum(argv[1]);
@@ -1283,7 +1480,8 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     // Test all fields if they can work when composed of only null characters
     test_null_characters(argv[1]);
 
-    // TODO : test all fields if they can end without the null character
+    // Test conducted on filesize (with and without data)
+    test_wrong_filesize(argv[1]);
 
     // TODO : test if filesize can not match with the actual file size (more data than file size)
 
@@ -1295,6 +1493,9 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // TODO : check if all numerical values can be negative (size, mtime, mode, uid, gid, checksum)
 
+    // TODO : test all fields if they can end without the null character
+
+    // TODO : try extracting a file that does not exist
 
     return 0;
 }
