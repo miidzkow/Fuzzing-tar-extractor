@@ -1212,6 +1212,6 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // TODO : check if all numerical values can be negative (size, mtime, mode, uid, gid, checksum)
 
-    // TODO : check if
+
     return 0;
 }
