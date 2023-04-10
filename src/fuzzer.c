@@ -882,7 +882,7 @@ int test_checksum_field(char* extractor) {
     int i, j;
     char checksum_str[8];
     // By default, the checksum is 6 times "a" as the checksum has to be terminated by "\0 "
-    memset(checksum_str, 'a', sizeof(checksum_str));
+    memset(checksum_str, '0', sizeof(checksum_str));
 
 
     struct tar_t header;
@@ -920,7 +920,7 @@ int test_checksum_field(char* extractor) {
                 // Keep going, maybe next character or next position will make it crash
             }
         }
-        checksum_str[i] = 'a';
+        checksum_str[i] = '0';
     }
 
     remove("test_checksum.tar");
@@ -1189,6 +1189,89 @@ void test_checksum(char* extractor) {
 }
 
 
+int test_only_null_characters(char* extractor) {
+    printf("Testing a header composed of only null characters.\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the mode field
+    generate_tar_header(&header, "", "", "", "", "",
+                        "", "", "", "ustar", "00", "", "");
+
+    calculate_checksum(&header);
+
+    write_tar_file("test_all_null.tar", &header);
+
+    if (extract(extractor, " test_all_null.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_all_null.tar", "success_all_null.tar");
+        // Delete the extracted file
+        remove("");
+        // return 1 to stop the execution as one crash is enough
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("");
+    }
+
+    remove("test_all_null.tar");
+
+    return 0;
+}
+
+
+int test_only_null_characters_with_data(char* extractor) {
+    printf("Testing a header composed of only null characters. (except magic and version fields)\n"
+           "        > File without data.\n"
+           "        > Single file in archive.\n");
+
+    struct tar_t header;
+
+    // Generate a header with other fields that are correct, only manipulate the mode field
+    generate_tar_header(&header, "", "", "", "", "",
+                        "", "", "", "ustar", "00", "", "");
+
+    calculate_checksum(&header);
+
+    write_tar_file_with_data("test_all_null2.tar", &header, "aaaaaaaaaaaaaaaaaaaa", 20);
+
+    if (extract(extractor, " test_all_null2.tar") == 1 ) {
+        // The extractor has crashed
+        rename("test_all_null2.tar", "success_all_null2.tar");
+        // Delete the extracted file
+        remove("");
+        // return 1 to stop the execution as one crash is enough
+        return 1;
+    } else {
+        // Delete the extracted file
+        remove("");
+    }
+
+    remove("test_all_null2.tar");
+
+    return 0;
+}
+
+void test_null_characters(char* extractor) {
+
+    // 1. Test il all fields in the header with null characters will make it crash (without data)
+    if (test_only_null_characters(extractor)) {
+        printf("\033[1;32m~~~~~It has crashed ! A header full of empty fields has caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a fully empty header.~~~~~\033[0m\n\n");
+    }
+
+    // 2. Test il all fields in the header with null characters will make it crash (without data)
+    if (test_only_null_characters_with_data(extractor)) {
+        printf("\033[1;32m~~~~~It has crashed ! A header (with data) full of empty fields has caused a crash.~~~~~\033[0m\n\n");
+    } else {
+        printf("\033[1;31m~~~~~No issues found with a fully empty header (with data).~~~~~\033[0m\n\n");
+    }
+}
+
+
 int main(__attribute__((unused)) int argc, char* argv[]) {
 
     // Test all fields in the header to see if they accept the whole range of characters from 0x00 to 0xFF (one file, no data)
@@ -1197,8 +1280,8 @@ int main(__attribute__((unused)) int argc, char* argv[]) {
     // Test different possibilities of crashes that could be caused by the checksum field
     test_checksum(argv[1]);
 
-
-    // TODO : test all fields if they will work for all null (0x00) characters
+    // Test all fields if they can work when composed of only null characters
+    test_null_characters(argv[1]);
 
     // TODO : test all fields if they can end without the null character
 
